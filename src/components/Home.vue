@@ -44,139 +44,134 @@
   </div>
 </template>
 
-<script>
-import Vue from "vue";
+<script lang="ts">
+import { Component, Prop, Vue } from "vue-property-decorator";
 import VueC3 from "vue-c3";
 
-export default {
+@Component({
   components: {
     VueC3
-  },
-  data() {
-    return {
-      barGraphHandler: new Vue(),
-      loading: false,
-      player_avatar: null,
-      player_nickname: null,
-      last_online: null,
-      error: null,
-      steamId: "76561198059385232",
-      ownedGamesTable: null,
-      fieldsTable: null
-    };
-  },
+  }
+})
+export default class TheSnake extends Vue {
+  barGraphHandler = new Vue();
+  loading = false;
+  player_avatar = null;
+  player_nickname = null;
+  last_online = "";
+  error = null;
+  steamId = "76561198059385232";
+  ownedGamesTable: any = [];
+  fieldsTable: any = null;
+
   created() {
     // fetch the data when the view is created and the data is
     // already being observed
     this.fetchData();
-  },
-  methods: {
-    fetchData() {
-      this.fetchPlayerSummaries();
-      this.fetchOwnedGames();
-      this.fetchRecentlyPlayedGames();
-    },
-    fetchPlayerSummaries() {
-      fetch(
-        `${process.env.VUE_APP_SERVER_URL}/v1/player/${this.steamId}/get_player_summaries/`
-      )
-        .then(response => {
-          return response.json();
-        })
-        .then(data => {
-          this.player_avatar = data.data.avatar;
-          this.player_nickname = data.data.personaname;
-
-          // Create a new JavaScript Date object based on the timestamp
-          // multiplied by 1000 so that the argument is in milliseconds, not seconds.
-          var date = new Date(data.data.lastlogoff * 1000);
-          // Minutes part from the timestamp
-          var minutes = "0" + date.getMinutes();
-          var formattedTime =
-            date.getFullYear() +
-            "/" +
-            (date.getMonth() + 1) +
-            "/" +
-            date.getDate() +
-            " " +
-            date.getHours() +
-            ":" +
-            minutes.substr(-2);
-
-          this.last_online = formattedTime;
-        })
-        // .catch(err => console.error(err))
-        .catch();
-    },
-    fetchOwnedGames() {
-      fetch(
-        `${process.env.VUE_APP_SERVER_URL}/v1/player/${this.steamId}/get_owned_games/`
-      )
-        .then(response => {
-          return response.json();
-        })
-        .then(data => {
-          var owned_games = [];
-          for (var i = 0; i < data.data.length; i++) {
-            owned_games.push({
-              Game: data.data[i].name,
-              Playtime: this.toHours(data.data[i].playtime_forever)
-            });
-          }
-          this.ownedGamesTable = owned_games;
-          this.fieldsTable = [
-            { key: "Game" },
-            { key: "Playtime", sortable: true }
-          ];
-        })
-        // .catch(err => console.error(err))
-        .catch();
-    },
-    fetchRecentlyPlayedGames() {
-      fetch(
-        `${process.env.VUE_APP_SERVER_URL}/v1/player/${this.steamId}/get_recently_played_games/`
-      )
-        .then(response => {
-          return response.json();
-        })
-        .then(data => {
-          var chartPlaytime2weeks = ["Playtime Last 2 Weeks"];
-          var chartPlaytimeForever = ["Playtime Overall"];
-          var nameXAxis = [];
-          for (var i = 0; i < data.data.length; i++) {
-            chartPlaytime2weeks.push(
-              this.toHours(data.data[i].playtime_2weeks)
-            );
-            chartPlaytimeForever.push(
-              this.toHours(data.data[i].playtime_forever)
-            );
-            nameXAxis.push(data.data[i].name);
-          }
-          const barGraphOptions = {
-            data: {
-              columns: [chartPlaytimeForever, chartPlaytime2weeks],
-              type: "bar"
-            },
-            axis: {
-              x: {
-                type: "category",
-                categories: nameXAxis
-              }
-            },
-            padding: {
-              bottom: 60
-            }
-          };
-          this.barGraphHandler.$emit("init", barGraphOptions);
-        })
-        // .catch(err => console.error(err))
-        .catch();
-    },
-    toHours(minutes) {
-      return (minutes / 60).toFixed(1);
-    }
   }
-};
+  fetchData() {
+    this.fetchPlayerSummaries();
+    this.fetchOwnedGames();
+    this.fetchRecentlyPlayedGames();
+  }
+  fetchPlayerSummaries() {
+    fetch(
+      `${process.env.VUE_APP_SERVER_URL}/v1/player/${this.steamId}/get_player_summaries/`
+    )
+      .then(response => {
+        return response.json();
+      })
+      .then(data => {
+        this.player_avatar = data.data.avatar;
+        this.player_nickname = data.data.personaname;
+
+        // Create a new JavaScript Date object based on the timestamp
+        // multiplied by 1000 so that the argument is in milliseconds, not seconds.
+        var date = new Date(data.data.lastlogoff * 1000);
+        // Minutes part from the timestamp
+        var minutes = "0" + date.getMinutes();
+        var formattedTime =
+          date.getFullYear() +
+          "/" +
+          (date.getMonth() + 1) +
+          "/" +
+          date.getDate() +
+          " " +
+          date.getHours() +
+          ":" +
+          minutes.substr(-2);
+
+        this.last_online = formattedTime;
+      })
+      // .catch(err => console.error(err))
+      .catch();
+  }
+  fetchOwnedGames() {
+    fetch(
+      `${process.env.VUE_APP_SERVER_URL}/v1/player/${this.steamId}/get_owned_games/`
+    )
+      .then(response => {
+        return response.json();
+      })
+      .then(data => {
+        var owned_games = [];
+        for (var i = 0; i < data.data.length; i++) {
+          owned_games.push({
+            Game: data.data[i].name,
+            Playtime: this.toHours(data.data[i].playtime_forever)
+          });
+        }
+        this.ownedGamesTable = owned_games;
+        this.fieldsTable = [
+          { key: "Game" },
+          { key: "Playtime", sortable: true }
+        ];
+      })
+      // .catch(err => console.error(err))
+      .catch();
+  }
+  fetchRecentlyPlayedGames() {
+    fetch(
+      `${process.env.VUE_APP_SERVER_URL}/v1/player/${this.steamId}/get_recently_played_games/`
+    )
+      .then(response => {
+        return response.json();
+      })
+      .then(data => {
+        var chartPlaytime2weeks = ["Playtime Last 2 Weeks"];
+        var chartPlaytimeForever = ["Playtime Overall"];
+        var nameXAxis = [];
+        for (var i = 0; i < data.data.length; i++) {
+          chartPlaytime2weeks.push(this.toHours(data.data[i].playtime_2weeks));
+          chartPlaytimeForever.push(
+            this.toHours(data.data[i].playtime_forever)
+          );
+          nameXAxis.push(data.data[i].name);
+        }
+        const barGraphOptions = {
+          data: {
+            columns: [chartPlaytimeForever, chartPlaytime2weeks],
+            type: "bar"
+          },
+          axis: {
+            x: {
+              type: "category",
+              categories: nameXAxis
+            }
+          },
+          padding: {
+            bottom: 60
+          }
+        };
+        this.barGraphHandler.$emit("init", barGraphOptions);
+      })
+      // .catch(err => console.error(err))
+      .catch();
+  }
+  toHours(minutes: number) {
+    return (minutes / 60).toFixed(1);
+  }
+}
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
