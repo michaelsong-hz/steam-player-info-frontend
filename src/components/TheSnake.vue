@@ -1,8 +1,18 @@
 <template>
   <div class="container">
     <Loading v-bind:loading="loading" />
+    <div class="row text-center" v-if="showNotSnake">
+      <div class="col-md" />
+      <div class="col-1">
+        <img :src="player_avatar" alt="steam avatar" />
+      </div>
+      <div class="col-">
+        <p>{{ player_nickname }} is not being a snake</p>
+      </div>
+      <div class="col-md" />
+    </div>
 
-    <div class="row text-center" v-if="!loading">
+    <div class="row text-center" v-if="showSnake">
       <div class="col-md" />
       <div class="col-1">
         <img :src="player_avatar" alt="steam avatar" />
@@ -12,14 +22,14 @@
       </div>
       <div class="col-md" />
     </div>
-    <div class="row text-center" v-if="!loading">
+    <div class="row text-center" v-if="showSnake">
       <div class="col-md">
         <p>
           <b>{{ timeSince }}</b>
         </p>
       </div>
     </div>
-    <div class="row text-center" v-if="!loading">
+    <div class="row text-center" v-if="showSnake">
       <div class="col-md">
         <p>Last Online: {{ last_online }}</p>
       </div>
@@ -45,6 +55,7 @@ export default class TheSnake extends Vue {
   last_online = "";
   error = null;
   lastOnlineRaw = moment();
+  isOnline = false;
 
   timeSinceRaw = 0;
   timeSince = "";
@@ -76,6 +87,9 @@ export default class TheSnake extends Vue {
       .then(data => {
         this.player_avatar = data.data.avatar;
         this.player_nickname = data.data.personaname;
+        if (data.data.personastate != 0) {
+          this.isOnline = true;
+        }
 
         var date = moment.unix(data.data.lastlogoff);
         this.lastOnlineRaw = date;
@@ -84,6 +98,19 @@ export default class TheSnake extends Vue {
       // .catch(err => console.error(err))
       .catch()
       .then(() => (this.loading = false));
+  }
+
+  get showSnake() {
+    if (!this.loading && !this.isOnline) {
+      return true;
+    }
+    return false;
+  }
+  get showNotSnake() {
+    if (!this.loading && this.isOnline) {
+      return true;
+    }
+    return false;
   }
 }
 </script>
