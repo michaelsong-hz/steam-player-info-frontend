@@ -1,6 +1,8 @@
 <template>
   <div class="container">
-    <div class="row text-center">
+    <Loading v-bind:loading="loading" />
+
+    <div class="row text-center" v-if="!loading">
       <div class="col-md" />
       <div class="col-1">
         <img :src="player_avatar" alt="steam avatar" />
@@ -10,14 +12,14 @@
       </div>
       <div class="col-md" />
     </div>
-    <div class="row text-center">
+    <div class="row text-center" v-if="!loading">
       <div class="col-md">
         <p>
           <b>{{ timeSince }}</b>
         </p>
       </div>
     </div>
-    <div class="row text-center">
+    <div class="row text-center" v-if="!loading">
       <div class="col-md">
         <p>Last Online: {{ last_online }}</p>
       </div>
@@ -27,12 +29,12 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
-import VueC3 from "vue-c3";
+import Loading from "@/components/Loading.vue";
 import moment from "moment";
 
 @Component({
   components: {
-    VueC3
+    Loading
   }
 })
 export default class TheSnake extends Vue {
@@ -64,6 +66,7 @@ export default class TheSnake extends Vue {
     this.fetchPlayerSummaries();
   }
   fetchPlayerSummaries() {
+    this.loading = true;
     fetch(
       `${process.env.VUE_APP_SERVER_URL}/v1/player/${this.steamId}/get_player_summaries/`
     )
@@ -79,7 +82,8 @@ export default class TheSnake extends Vue {
         this.last_online = date.format("MM/DD/YYYY HH:MM:SS");
       })
       // .catch(err => console.error(err))
-      .catch();
+      .catch()
+      .then(() => (this.loading = false));
   }
 }
 </script>

@@ -1,7 +1,8 @@
 <template>
   <div class="container">
     <div class="row">
-      <div class="col-md-12">
+      <div class="col-md-12 pad-bottom">
+        <h1>Steam Player Info</h1>
         <b-input-group prepend="Steam ID Base64" class="mt-3">
           <b-form-input v-model="steamId"></b-form-input>
           <b-input-group-append>
@@ -10,10 +11,10 @@
             >
           </b-input-group-append>
         </b-input-group>
-        <h1>Steam Player Info</h1>
       </div>
     </div>
-    <div class="row text-center">
+    <Loading v-bind:loading="loadingPlayerInfo" />
+    <div class="row" v-if="!loadingPlayerInfo">
       <div class="col-md" />
       <div class="col-xs">
         <img :src="player_avatar" alt="steam avatar" />
@@ -23,13 +24,21 @@
       </div>
       <div class="col-md" />
     </div>
-    <div class="row">
+    <div class="row" v-if="!loadingPlayerInfo">
       <div class="col-lg">
         <p>Last Online: {{ last_online }}</p>
+      </div>
+    </div>
+    <div class="row pad-bottom">
+      <div class="col-lg">
         <h2>Recent Games Playtime</h2>
         <vue-c3 :handler="barGraphHandler"></vue-c3>
       </div>
     </div>
+    <Loading
+      v-bind:loading="loadingRecentPlaytime"
+      :shouldShowLoadingTip="false"
+    />
     <div class="row">
       <div class="col-lg">
         <h2>All Games Playtime</h2>
@@ -41,21 +50,26 @@
         ></b-table>
       </div>
     </div>
+    <Loading v-bind:loading="loadingAllGames" :shouldShowLoadingTip="false" />
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
+import Loading from "@/components/Loading.vue";
 import VueC3 from "vue-c3";
 
 @Component({
   components: {
+    Loading,
     VueC3
   }
 })
 export default class TheSnake extends Vue {
   barGraphHandler = new Vue();
-  loading = false;
+  loadingPlayerInfo = false;
+  loadingRecentPlaytime = false;
+  loadingAllGames = false;
   player_avatar = null;
   player_nickname = null;
   last_online = "";
@@ -75,6 +89,7 @@ export default class TheSnake extends Vue {
     this.fetchRecentlyPlayedGames();
   }
   fetchPlayerSummaries() {
+    this.loadingPlayerInfo = true;
     fetch(
       `${process.env.VUE_APP_SERVER_URL}/v1/player/${this.steamId}/get_player_summaries/`
     )
@@ -104,9 +119,11 @@ export default class TheSnake extends Vue {
         this.last_online = formattedTime;
       })
       // .catch(err => console.error(err))
-      .catch();
+      .catch()
+      .then(() => (this.loadingPlayerInfo = false));
   }
   fetchOwnedGames() {
+    this.loadingAllGames = true;
     fetch(
       `${process.env.VUE_APP_SERVER_URL}/v1/player/${this.steamId}/get_owned_games/`
     )
@@ -128,9 +145,11 @@ export default class TheSnake extends Vue {
         ];
       })
       // .catch(err => console.error(err))
-      .catch();
+      .catch()
+      .then(() => (this.loadingAllGames = false));
   }
   fetchRecentlyPlayedGames() {
+    this.loadingRecentPlaytime = true;
     fetch(
       `${process.env.VUE_APP_SERVER_URL}/v1/player/${this.steamId}/get_recently_played_games/`
     )
@@ -166,7 +185,8 @@ export default class TheSnake extends Vue {
         this.barGraphHandler.$emit("init", barGraphOptions);
       })
       // .catch(err => console.error(err))
-      .catch();
+      .catch()
+      .then(() => (this.loadingRecentPlaytime = false));
   }
   toHours(minutes: number) {
     return (minutes / 60).toFixed(1);
@@ -176,6 +196,9 @@ export default class TheSnake extends Vue {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.pad-bottom {
+  padding-bottom: 30px;
+}
 /* h1,
 h2 {
   font-weight: normal;
